@@ -15,6 +15,12 @@ export interface AnchorDto {
   pageEnd: number;
 }
 
+export interface ContributionsDto {
+  bullets: string[];
+  details?: string[];            // NEW
+  anchors: AnchorDto[];
+}
+
 export interface RelatedItem {
   title: string;
   authors: string;
@@ -39,6 +45,6 @@ export interface PaperDto {
   status: PaperStatus;
   sections?: SectionHeaderDto[];
   summary?: { executiveSummary: string };
-  contributions?: { bullets: string[]; anchors: AnchorDto[] };
+  contributions?: ContributionsDto;
   related?: RelatedPayload;
 }

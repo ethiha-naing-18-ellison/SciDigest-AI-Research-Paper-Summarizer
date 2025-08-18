@@ -68,7 +68,7 @@ export default function PaperPage() {
       {done && (
         <>
           <SummaryCard text={paper.summary?.executiveSummary} />
-          <ContributionsList bullets={paper.contributions?.bullets} anchors={paper.contributions?.anchors} />
+          <ContributionsList bullets={paper.contributions?.bullets} details={paper.contributions?.details} anchors={paper.contributions?.anchors} />
           <RelatedGrid data={paper.related} />
           <div className="glass rounded-2xl p-5 shadow-2xl">
             <ExportButtons id={paper.id} />

@@ -51,6 +51,7 @@ class Anchor(BaseModel):
 class SummarizeResult(BaseModel):
     summary: str
     contributions: List[str]
+    details: List[str] | None = None       # NEW (optional)
     anchors: List[Anchor]
 
 class RelatedInput(BaseModel):
@@ -85,13 +86,42 @@ def parse(inp: ParseInput):
         }]
     }
 
+def make_detail(bullet: str, sections_text: list[str]) -> str:
+    """
+    Build a short, concrete explanation (2–3 sentences) using context from the
+    most relevant section text. Fallback to the bullet itself if no context.
+    """
+    # pick the first section containing a substring match; otherwise join a bit of intro/results
+    ctx = ""
+    for txt in sections_text:
+        if bullet[:30].lower() in txt.lower():
+            ctx = txt
+            break
+    if not ctx and sections_text:
+        ctx = " ".join(sections_text[:2])[:2000]
+
+    # Very light reduction: pick 2–3 informative sentences from ctx.
+    import re
+    sents = [s.strip() for s in re.split(r'(?<=[.!?])\s+', ctx) if 40 <= len(s.strip()) <= 300]
+    if not sents:
+        return bullet
+    # take up to 2–3 diverse sentences
+    chosen = sents[:3]
+    return " ".join(chosen[:3])
+
 @app.post("/summarize", response_model=SummarizeResult)
 def summarize(inp: SummarizeInput):
     bullets = [f"Key contribution #{i+1} (stub)" for i in range(8)]
     anchors = [{"bulletIndex": i, "sectionName": "abstract", "pageStart": 1, "pageEnd": 1} for i in range(len(bullets))]
+    
+    # Generate details for each bullet
+    sections_text = [s.text for s in inp.sections]
+    details = [make_detail(b, sections_text) for b in bullets]
+    
     return {
         "summary": "Stub executive summary. Replace with real model output.",
         "contributions": bullets,
+        "details": details,                     # NEW
         "anchors": anchors
     }
 

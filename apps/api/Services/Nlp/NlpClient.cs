@@ -43,7 +43,7 @@ public class NlpClient : INlpClient
         }
     }
 
-    public async Task<(string summary, string[] contributions, AnchorDto[] anchors)> SummarizeAsync(Guid paperId, SectionDto[] sections)
+    public async Task<(string summary, string[] contributions, string[]? details, AnchorDto[] anchors)> SummarizeAsync(Guid paperId, SectionDto[] sections)
     {
         if (_options.Stub)
         {
@@ -60,7 +60,8 @@ public class NlpClient : INlpClient
             var result = JsonSerializer.Deserialize<SummarizeResponse>(content);
             
             return (result?.Summary ?? string.Empty, 
-                    result?.Contributions ?? Array.Empty<string>(), 
+                    result?.Contributions ?? Array.Empty<string>(),
+                    result?.Details,
                     result?.Anchors ?? Array.Empty<AnchorDto>());
         }
         catch (Exception ex)
@@ -145,7 +146,7 @@ public class NlpClient : INlpClient
         };
     }
 
-    private static (string summary, string[] contributions, AnchorDto[] anchors) GenerateStubSummary(Guid paperId)
+    private static (string summary, string[] contributions, string[]? details, AnchorDto[] anchors) GenerateStubSummary(Guid paperId)
     {
         var summary = "This paper introduces a novel machine learning approach that combines deep learning with traditional statistical methods, achieving a 15% improvement in accuracy over existing baseline methods. The work addresses key challenges in the field and demonstrates significant potential for practical applications. The methodology introduces innovative techniques that bridge the gap between traditional statistical approaches and modern deep learning paradigms. Through extensive experimentation across multiple benchmark datasets, the proposed approach consistently outperforms state-of-the-art methods while maintaining computational efficiency. The comprehensive evaluation includes both quantitative metrics and qualitative analysis, providing robust validation of the proposed techniques. The findings contribute significantly to the advancement of hybrid machine learning methodologies and establish new benchmarks for future research in this domain.";
         
@@ -177,7 +178,21 @@ public class NlpClient : INlpClient
             new AnchorDto { BulletIndex = 9, SectionName = "Results", PageStart = 7, PageEnd = 8 }
         };
 
-        return (summary, contributions, anchors);
+        var details = new[]
+        {
+            "This novel approach introduces a hybrid architecture that effectively combines the representation learning capabilities of deep neural networks with the interpretability and robustness of traditional statistical methods. The algorithm demonstrates superior performance through its ability to leverage both paradigms.",
+            "Through comprehensive evaluation across five benchmark datasets, our method consistently achieves 15% higher accuracy compared to state-of-the-art baselines including Random Forest, SVM, and deep learning models. The improvement is statistically significant with p < 0.001.",
+            "The evaluation framework includes rigorous testing on MNIST, CIFAR-10, ImageNet, Reuters, and Amazon reviews datasets, providing comprehensive coverage across different domains. Each dataset was split using standard protocols to ensure fair comparison with existing methods.",
+            "All implementation code, trained models, and experimental configurations have been made publicly available on GitHub under MIT license. The repository includes detailed documentation, tutorials, and reproducible experiment scripts for community use.",
+            "The proposed hybrid approach establishes new performance benchmarks for several key tasks in computer vision and natural language processing. These benchmarks provide valuable reference points for future research in hybrid machine learning methodologies.",
+            "The algorithm architecture incorporates novel optimization techniques that enable real-time inference with sub-millisecond latency on standard hardware. This efficiency makes the approach suitable for production deployment in time-critical applications.",
+            "A comprehensive hyperparameter analysis reveals the sensitivity of model performance to key architectural choices including layer depth, learning rate schedules, and regularization parameters. The analysis provides practical guidance for model tuning in different domains.",
+            "Extensive comparison with 12 state-of-the-art methods including BERT, ResNet, and Transformer variants demonstrates the superiority of our approach. The comparison uses standardized evaluation protocols and identical hardware configurations for fair assessment.",
+            "Detailed ablation studies systematically evaluate the contribution of each component including the statistical inference module, deep feature extractor, and hybrid fusion mechanism. Each component contributes significantly to overall performance with complementary strengths.",
+            "Cross-dataset validation across multiple domains demonstrates the generalizability of our approach beyond the training distribution. The method maintains robust performance when applied to datasets with different characteristics and domains."
+        };
+
+        return (summary, contributions, details, anchors);
     }
 
     private static RelatedPayload GenerateStubRelated(string? title)
@@ -285,6 +300,7 @@ public class NlpClient : INlpClient
     {
         public string Summary { get; set; } = string.Empty;
         public string[] Contributions { get; set; } = Array.Empty<string>();
+        public string[]? Details { get; set; }                         // NEW
         public AnchorDto[] Anchors { get; set; } = Array.Empty<AnchorDto>();
     }
 }
