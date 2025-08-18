@@ -1,4 +1,4 @@
-#To run the bakend api, 
+# To run the bakend api, 
 
 dotnet build (if not build yet)
 
@@ -8,12 +8,12 @@ dotnet run --urls "http://localhost:5108"
 
 check the api at: http://localhost:5108/swagger/index.html    
 
+ 
 
 
 
 
-
-#To run the fondend web, 
+# To run the fondend web, 
 
 npm install (if not installed yet)
 
