@@ -23,6 +23,8 @@ public class MappingProfile : Profile
         CreateMap<Contribution, ContributionsResponse>()
             .ForMember(dest => dest.Bullets, opt => opt.MapFrom(src => 
                 ParseContributionBullets(src.BulletsJson)))
+            .ForMember(dest => dest.Details, opt => opt.MapFrom(src => 
+                ParseContributionDetails(src.BulletsJson)))
             .ForMember(dest => dest.Anchors, opt => opt.MapFrom(src => 
                 ParseContributionAnchors(src.BulletsJson)));
 
@@ -38,12 +40,50 @@ public class MappingProfile : Profile
         
         try
         {
+            // Try new format first (with details)
+            var newItems = JsonSerializer.Deserialize<ContributionItem[]>(bulletsJson);
+            if (newItems != null)
+                return newItems.Select(x => x.headline ?? "").Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
+            
+            // Fallback to old format
             var data = JsonSerializer.Deserialize<ContributionData>(bulletsJson);
             return data?.Bullets ?? Array.Empty<string>();
         }
         catch
         {
-            return Array.Empty<string>();
+            try
+            {
+                // Try as simple string array (oldest format)
+                return JsonSerializer.Deserialize<string[]>(bulletsJson) ?? Array.Empty<string>();
+            }
+            catch
+            {
+                return Array.Empty<string>();
+            }
+        }
+    }
+
+    private static string[]? ParseContributionDetails(string bulletsJson)
+    {
+        if (string.IsNullOrEmpty(bulletsJson))
+            return null;
+        
+        try
+        {
+            // Try new format first (with details)
+            var newItems = JsonSerializer.Deserialize<ContributionItem[]>(bulletsJson);
+            if (newItems != null)
+            {
+                var details = newItems.Select(x => x.detail ?? "").ToArray();
+                return details.Any(d => !string.IsNullOrWhiteSpace(d)) ? details : null;
+            }
+            
+            // Old format doesn't have details
+            return null;
+        }
+        catch
+        {
+            return null;
         }
     }
 
@@ -122,4 +162,10 @@ public class ContributionData
 {
     public string[] Bullets { get; set; } = Array.Empty<string>();
     public AnchorDto[]? Anchors { get; set; }
+}
+
+public class ContributionItem
+{
+    public string? headline { get; set; }
+    public string? detail { get; set; }
 }

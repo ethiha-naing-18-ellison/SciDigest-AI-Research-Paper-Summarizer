@@ -55,6 +55,7 @@ public class SummaryResponse
 public class ContributionsResponse
 {
     public string[] Bullets { get; set; } = Array.Empty<string>();
+    public string[]? Details { get; set; }
     public AnchorDto[] Anchors { get; set; } = Array.Empty<AnchorDto>();
 }
 

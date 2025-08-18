@@ -144,7 +144,7 @@ public class ProcessingPipeline
                 OrderIdx = s.OrderIdx
             }).ToArray();
 
-            var (summary, contributions, anchors) = await _nlpClient.SummarizeAsync(paperId, sectionDtos);
+            var (summary, contributions, details, anchors) = await _nlpClient.SummarizeAsync(paperId, sectionDtos);
 
             // Save summary
             var summaryEntity = new Summary
@@ -156,18 +156,18 @@ public class ProcessingPipeline
             };
             await _repository.SaveSummaryAsync(summaryEntity);
 
-            // Save contributions with anchors
-            var contributionData = new ContributionData
-            {
-                Bullets = contributions,
-                Anchors = anchors
-            };
+            // Save contributions with details and anchors
+            var items = contributions
+                .Select((headline, i) => new {
+                    headline,
+                    detail = (details != null && i < details.Length) ? details[i] : null
+                }).ToArray();
 
             var contributionEntity = new Contribution
             {
                 Id = Guid.NewGuid(),
                 PaperId = paperId,
-                BulletsJson = JsonSerializer.Serialize(contributionData),
+                BulletsJson = JsonSerializer.Serialize(items),
                 CreatedAt = DateTime.UtcNow
             };
             await _repository.SaveContributionsAsync(contributionEntity);
