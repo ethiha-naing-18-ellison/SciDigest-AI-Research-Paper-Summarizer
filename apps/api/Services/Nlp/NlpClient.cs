@@ -19,11 +19,12 @@ public class NlpClient : INlpClient
         _httpClient.BaseAddress = new Uri(_options.BaseUrl);
     }
 
-    public async Task<SectionDto[]> ParseAsync(Guid paperId, string filePath)
+    public async Task<ParseResultDto> ParseAsync(Guid paperId, string filePath)
     {
         if (_options.Stub)
         {
-            return GenerateStubSections(paperId);
+            var sections = GenerateStubSections(paperId);
+            return new ParseResultDto(null, sections);
         }
 
         try
@@ -33,7 +34,7 @@ public class NlpClient : INlpClient
             response.EnsureSuccessStatusCode();
             
             var content = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<SectionDto[]>(content) ?? Array.Empty<SectionDto>();
+            return JsonSerializer.Deserialize<ParseResultDto>(content) ?? new ParseResultDto(null, Array.Empty<SectionDto>());
         }
         catch (Exception ex)
         {
@@ -146,14 +147,20 @@ public class NlpClient : INlpClient
 
     private static (string summary, string[] contributions, AnchorDto[] anchors) GenerateStubSummary(Guid paperId)
     {
-        var summary = "This paper introduces a novel machine learning approach that combines deep learning with traditional statistical methods, achieving a 15% improvement in accuracy over existing baseline methods. The work addresses key challenges in the field and demonstrates significant potential for practical applications.";
+        var summary = "This paper introduces a novel machine learning approach that combines deep learning with traditional statistical methods, achieving a 15% improvement in accuracy over existing baseline methods. The work addresses key challenges in the field and demonstrates significant potential for practical applications. The methodology introduces innovative techniques that bridge the gap between traditional statistical approaches and modern deep learning paradigms. Through extensive experimentation across multiple benchmark datasets, the proposed approach consistently outperforms state-of-the-art methods while maintaining computational efficiency. The comprehensive evaluation includes both quantitative metrics and qualitative analysis, providing robust validation of the proposed techniques. The findings contribute significantly to the advancement of hybrid machine learning methodologies and establish new benchmarks for future research in this domain.";
         
         var contributions = new[]
         {
             "Novel hybrid algorithm combining deep learning and statistical methods",
             "15% improvement in accuracy over baseline approaches",
             "Comprehensive evaluation on multiple benchmark datasets",
-            "Open-source implementation made available to the research community"
+            "Open-source implementation made available to the research community",
+            "Establishes new benchmarks for hybrid machine learning approaches",
+            "Develops efficient algorithms for real-time processing applications",
+            "Analyzes the impact of various hyperparameters on model performance",
+            "Compares results with multiple state-of-the-art baseline methods",
+            "Provides detailed ablation studies for component analysis",
+            "Validates approach through extensive cross-dataset evaluation"
         };
 
         var anchors = new[]
@@ -161,7 +168,13 @@ public class NlpClient : INlpClient
             new AnchorDto { BulletIndex = 0, SectionName = "Methods", PageStart = 3, PageEnd = 5 },
             new AnchorDto { BulletIndex = 1, SectionName = "Results", PageStart = 6, PageEnd = 8 },
             new AnchorDto { BulletIndex = 2, SectionName = "Results", PageStart = 7, PageEnd = 8 },
-            new AnchorDto { BulletIndex = 3, SectionName = "Conclusion", PageStart = 9, PageEnd = 9 }
+            new AnchorDto { BulletIndex = 3, SectionName = "Conclusion", PageStart = 9, PageEnd = 9 },
+            new AnchorDto { BulletIndex = 4, SectionName = "Results", PageStart = 6, PageEnd = 8 },
+            new AnchorDto { BulletIndex = 5, SectionName = "Methods", PageStart = 3, PageEnd = 5 },
+            new AnchorDto { BulletIndex = 6, SectionName = "Results", PageStart = 6, PageEnd = 8 },
+            new AnchorDto { BulletIndex = 7, SectionName = "Results", PageStart = 7, PageEnd = 8 },
+            new AnchorDto { BulletIndex = 8, SectionName = "Results", PageStart = 6, PageEnd = 8 },
+            new AnchorDto { BulletIndex = 9, SectionName = "Results", PageStart = 7, PageEnd = 8 }
         };
 
         return (summary, contributions, anchors);
@@ -171,7 +184,7 @@ public class NlpClient : INlpClient
     {
         return new RelatedPayload
         {
-            Provider = "OpenAlex",
+            Provider = "OpenAlex+SemanticScholar",
             Items = new List<RelatedItem>
             {
                 new RelatedItem
@@ -200,6 +213,69 @@ public class NlpClient : INlpClient
                     Year = 2023,
                     Url = "https://example.com/paper3",
                     Reason = "Comprehensive evaluation methodology on benchmark datasets"
+                },
+                new RelatedItem
+                {
+                    Title = "Hybrid Machine Learning Approaches: A Systematic Review",
+                    Authors = "Anderson, P.; Taylor, R.; White, S.",
+                    Venue = "IEEE Transactions on Pattern Analysis and Machine Intelligence",
+                    Year = 2023,
+                    Url = "https://example.com/paper4",
+                    Reason = "Directly related to hybrid machine learning methodologies"
+                },
+                new RelatedItem
+                {
+                    Title = "Real-time Processing in Machine Learning Systems",
+                    Authors = "Miller, J.; Clark, K.; Rodriguez, M.",
+                    Venue = "ACM Computing Surveys",
+                    Year = 2022,
+                    Url = "https://example.com/paper5",
+                    Reason = "Addresses real-time processing challenges in ML systems"
+                },
+                new RelatedItem
+                {
+                    Title = "Hyperparameter Optimization in Deep Learning",
+                    Authors = "Lee, H.; Kim, S.; Park, J.",
+                    Venue = "Neural Networks",
+                    Year = 2023,
+                    Url = "https://example.com/paper6",
+                    Reason = "Focuses on hyperparameter analysis and optimization"
+                },
+                new RelatedItem
+                {
+                    Title = "State-of-the-Art Comparison in Machine Learning",
+                    Authors = "Wang, L.; Chen, X.; Liu, Y.",
+                    Venue = "Pattern Recognition",
+                    Year = 2023,
+                    Url = "https://example.com/paper7",
+                    Reason = "Comprehensive comparison with state-of-the-art methods"
+                },
+                new RelatedItem
+                {
+                    Title = "Ablation Studies in Deep Learning Research",
+                    Authors = "Johnson, M.; Davis, R.; Wilson, T.",
+                    Venue = "Computer Vision and Image Understanding",
+                    Year = 2022,
+                    Url = "https://example.com/paper8",
+                    Reason = "Methodology for component analysis and ablation studies"
+                },
+                new RelatedItem
+                {
+                    Title = "Cross-Dataset Evaluation in Machine Learning",
+                    Authors = "Brown, A.; Green, B.; Black, C.",
+                    Venue = "Machine Learning",
+                    Year = 2023,
+                    Url = "https://example.com/paper9",
+                    Reason = "Validation through cross-dataset evaluation approaches"
+                },
+                new RelatedItem
+                {
+                    Title = "Computational Efficiency in Neural Networks",
+                    Authors = "Garcia, M.; Lopez, N.; Perez, O.",
+                    Venue = "Journal of Artificial Intelligence Research",
+                    Year = 2022,
+                    Url = "https://example.com/paper10",
+                    Reason = "Focuses on computational efficiency in neural networks"
                 }
             }
         };

@@ -81,10 +81,22 @@ public class ProcessingPipeline
 
         try
         {
-            var sections = await _nlpClient.ParseAsync(paperId, filePath);
+            var parse = await _nlpClient.ParseAsync(paperId, filePath);
             
-            // Convert to entities
-            var sectionEntities = sections.Select(s => new PaperSection
+            // Update paper metadata if present
+            var paper = await _repository.GetByIdAsync(paperId);
+            if (paper != null && parse.Meta is { } m)
+            {
+                if (!string.IsNullOrWhiteSpace(m.Title)) paper.Title = m.Title;
+                if (!string.IsNullOrWhiteSpace(m.Authors)) paper.Authors = m.Authors;
+                if (m.Year.HasValue) paper.Year = m.Year;
+                if (!string.IsNullOrWhiteSpace(m.Venue)) paper.Venue = m.Venue;
+                paper.UpdatedAt = DateTime.UtcNow;
+                await _repository.UpdateAsync(paper);
+            }
+            
+            // Convert sections to entities
+            var sectionEntities = parse.Sections.Select(s => new PaperSection
             {
                 Id = Guid.NewGuid(),
                 PaperId = paperId,
@@ -99,10 +111,9 @@ public class ProcessingPipeline
             await _repository.SaveSectionsAsync(paperId, sectionEntities);
             
             // Update paper pages count
-            var paper = await _repository.GetByIdAsync(paperId);
-            if (paper != null && sections.Length > 0)
+            if (paper != null && parse.Sections.Length > 0)
             {
-                paper.Pages = sections.Max(s => s.PageEnd);
+                paper.Pages = parse.Sections.Max(s => s.PageEnd);
                 await _repository.UpdateAsync(paper);
             }
 

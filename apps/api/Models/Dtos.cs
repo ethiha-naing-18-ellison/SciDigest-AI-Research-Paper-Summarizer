@@ -1,5 +1,9 @@
 namespace Api.Models;
 
+public sealed record ParseMetaDto(string? Title, string? Authors, int? Year, string? Venue);
+
+public sealed record ParseResultDto(ParseMetaDto? Meta, SectionDto[] Sections);
+
 public class SectionDto
 {
     public string Name { get; set; } = string.Empty;
