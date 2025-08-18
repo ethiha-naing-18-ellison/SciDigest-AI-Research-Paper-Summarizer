@@ -184,7 +184,7 @@ def clean_pdf_text(text: str) -> str:
     # Remove URL patterns
     text = re.sub(r'https?://[^\s]+', '', text)
     
-    # Remove citation patterns like (Author et al, 2023)
+    # Remove citation patterns like (Author et al, 2023) - but be more careful
     text = re.sub(r'\([^)]*et al[^)]*\)', '', text)
     text = re.sub(r'\([^)]*\d{4}[^)]*\)', '', text)
     
@@ -199,13 +199,13 @@ def clean_pdf_text(text: str) -> str:
     text = re.sub(r'\s+', ' ', text)
     text = re.sub(r'\n+', '\n', text)
     
-    # Remove lines that are just numbers or special characters
+    # Remove lines that are just numbers or special characters - but be less aggressive
     lines = text.split('\n')
     cleaned_lines = []
     for line in lines:
         line = line.strip()
         # Skip lines that are mostly numbers, special chars, or too short
-        if (len(line) > 10 and 
+        if (len(line) > 3 and 
             not re.match(r'^[\d\s\-_\.]+$', line) and
             not re.match(r'^[A-Z\s]+$', line) and  # Skip all caps headers
             not line.startswith('(') and
@@ -215,6 +215,14 @@ def clean_pdf_text(text: str) -> str:
     # Join lines and clean up
     result = ' '.join(cleaned_lines)
     result = re.sub(r'\s+', ' ', result).strip()
+    
+    # If we removed too much, return the original text with basic cleaning
+    if len(result) < 50:
+        # Just do basic cleaning without removing lines
+        basic_clean = re.sub(r'https?://[^\s]+', '', text)  # Remove URLs
+        basic_clean = re.sub(r'doi:[^\s]+', '', basic_clean)  # Remove DOIs
+        basic_clean = re.sub(r'\s+', ' ', basic_clean).strip()  # Clean whitespace
+        return basic_clean
     
     return result
 
@@ -228,17 +236,22 @@ def generate_abstract(text: str, word_count: int) -> str:
     sentences = text.split('.')
     abstract_sentences = []
     
-    for sentence in sentences[:10]:  # Look at first 10 sentences
+    for sentence in sentences[:15]:  # Look at first 15 sentences
         sentence = sentence.strip()
-        if len(sentence) > 30 and len(sentence) < 300:
+        if len(sentence) > 20 and len(sentence) < 400:
             # Look for abstract-like content
             lower_sent = sentence.lower()
-            if any(keyword in lower_sent for keyword in ['present', 'propose', 'introduce', 'study', 'investigate', 'examine', 'analyze']):
+            if any(keyword in lower_sent for keyword in ['present', 'propose', 'introduce', 'study', 'investigate', 'examine', 'analyze', 'paper', 'research', 'method', 'approach']):
                 abstract_sentences.append(sentence)
     
     if abstract_sentences:
         return " ".join(abstract_sentences[:3])
     else:
+        # Fallback: take first meaningful sentence
+        for sentence in sentences:
+            sentence = sentence.strip()
+            if len(sentence) > 30 and len(sentence) < 300:
+                return sentence
         return f"This research paper contains {word_count} words of content covering various aspects of the study."
 
 def generate_introduction(text: str, word_count: int) -> str:
@@ -247,13 +260,13 @@ def generate_introduction(text: str, word_count: int) -> str:
         return "Introduction analysis requires more content."
     
     # Look for introduction-like content
-    intro_keywords = ['background', 'motivation', 'problem', 'challenge', 'goal', 'objective', 'purpose']
+    intro_keywords = ['background', 'motivation', 'problem', 'challenge', 'goal', 'objective', 'purpose', 'introduction', 'context', 'field', 'area', 'domain']
     sentences = text.split('.')
     intro_sentences = []
     
-    for sentence in sentences:
+    for sentence in sentences[:20]:  # Look at first 20 sentences
         sentence = sentence.strip()
-        if len(sentence) > 20 and len(sentence) < 250:
+        if len(sentence) > 20 and len(sentence) < 300:
             lower_sent = sentence.lower()
             if any(keyword in lower_sent for keyword in intro_keywords):
                 intro_sentences.append(sentence)
@@ -261,6 +274,11 @@ def generate_introduction(text: str, word_count: int) -> str:
     if intro_sentences:
         return " ".join(intro_sentences[:2])
     else:
+        # Fallback: take first meaningful sentence
+        for sentence in sentences:
+            sentence = sentence.strip()
+            if len(sentence) > 30 and len(sentence) < 250:
+                return sentence
         return f"This paper introduces research covering {word_count} words of content with various objectives and goals."
 
 def generate_methodology(text: str, word_count: int) -> str:
@@ -269,13 +287,13 @@ def generate_methodology(text: str, word_count: int) -> str:
         return "Methodology analysis requires more content."
     
     # Look for methodology-related content
-    method_keywords = ['method', 'approach', 'algorithm', 'technique', 'procedure', 'experiment', 'design', 'framework']
+    method_keywords = ['method', 'approach', 'algorithm', 'technique', 'procedure', 'experiment', 'design', 'framework', 'methodology', 'implementation', 'process', 'system']
     sentences = text.split('.')
     method_sentences = []
     
-    for sentence in sentences:
+    for sentence in sentences[:25]:  # Look at first 25 sentences
         sentence = sentence.strip()
-        if len(sentence) > 25 and len(sentence) < 300:
+        if len(sentence) > 25 and len(sentence) < 350:
             lower_sent = sentence.lower()
             if any(keyword in lower_sent for keyword in method_keywords):
                 method_sentences.append(sentence)
@@ -283,6 +301,13 @@ def generate_methodology(text: str, word_count: int) -> str:
     if method_sentences:
         return " ".join(method_sentences[:2])
     else:
+        # Fallback: look for any sentence with technical terms
+        for sentence in sentences:
+            sentence = sentence.strip()
+            if len(sentence) > 40 and len(sentence) < 300:
+                lower_sent = sentence.lower()
+                if any(word in lower_sent for word in ['we', 'our', 'propose', 'develop', 'implement', 'use', 'apply']):
+                    return sentence
         return f"The research methodology involves analysis of {word_count} words of content using various analytical approaches."
 
 def generate_results(text: str, word_count: int) -> str:
@@ -291,13 +316,13 @@ def generate_results(text: str, word_count: int) -> str:
         return "Results analysis requires more content."
     
     # Look for results-related content
-    result_keywords = ['result', 'finding', 'outcome', 'performance', 'accuracy', 'improvement', 'achieved', 'demonstrated']
+    result_keywords = ['result', 'finding', 'outcome', 'performance', 'accuracy', 'improvement', 'achieved', 'demonstrated', 'show', 'indicate', 'reveal', 'obtain', 'achieve']
     sentences = text.split('.')
     result_sentences = []
     
-    for sentence in sentences:
+    for sentence in sentences[:30]:  # Look at first 30 sentences
         sentence = sentence.strip()
-        if len(sentence) > 20 and len(sentence) < 250:
+        if len(sentence) > 20 and len(sentence) < 300:
             lower_sent = sentence.lower()
             if any(keyword in lower_sent for keyword in result_keywords):
                 result_sentences.append(sentence)
@@ -305,6 +330,12 @@ def generate_results(text: str, word_count: int) -> str:
     if result_sentences:
         return " ".join(result_sentences[:2])
     else:
+        # Fallback: look for sentences with numbers or percentages
+        for sentence in sentences:
+            sentence = sentence.strip()
+            if len(sentence) > 30 and len(sentence) < 250:
+                if any(char.isdigit() for char in sentence):
+                    return sentence
         return f"Analysis of {word_count} words of content reveals various findings and outcomes from the research."
 
 def generate_discussion(text: str, word_count: int) -> str:
@@ -313,13 +344,13 @@ def generate_discussion(text: str, word_count: int) -> str:
         return "Discussion analysis requires more content."
     
     # Look for discussion-related content
-    discussion_keywords = ['discuss', 'interpret', 'implication', 'conclusion', 'analysis', 'interpretation', 'significance']
+    discussion_keywords = ['discuss', 'interpret', 'implication', 'conclusion', 'analysis', 'interpretation', 'significance', 'suggest', 'indicate', 'imply', 'conclude', 'therefore', 'thus']
     sentences = text.split('.')
     discussion_sentences = []
     
-    for sentence in sentences:
+    for sentence in sentences[:35]:  # Look at first 35 sentences
         sentence = sentence.strip()
-        if len(sentence) > 25 and len(sentence) < 300:
+        if len(sentence) > 25 and len(sentence) < 350:
             lower_sent = sentence.lower()
             if any(keyword in lower_sent for keyword in discussion_keywords):
                 discussion_sentences.append(sentence)
@@ -327,6 +358,13 @@ def generate_discussion(text: str, word_count: int) -> str:
     if discussion_sentences:
         return " ".join(discussion_sentences[:2])
     else:
+        # Fallback: look for sentences with discussion words
+        for sentence in sentences:
+            sentence = sentence.strip()
+            if len(sentence) > 40 and len(sentence) < 300:
+                lower_sent = sentence.lower()
+                if any(word in lower_sent for word in ['this', 'these', 'that', 'those', 'however', 'although', 'while']):
+                    return sentence
         return f"The discussion covers analysis of {word_count} words of content with various interpretations and implications."
 
 def generate_limitations(text: str, word_count: int) -> str:
@@ -335,13 +373,13 @@ def generate_limitations(text: str, word_count: int) -> str:
         return "Limitations analysis requires more content."
     
     # Look for limitations-related content
-    limitation_keywords = ['limitation', 'constraint', 'challenge', 'difficulty', 'restriction', 'drawback', 'weakness']
+    limitation_keywords = ['limitation', 'constraint', 'challenge', 'difficulty', 'restriction', 'drawback', 'weakness', 'future', 'improve', 'enhance', 'extend']
     sentences = text.split('.')
     limitation_sentences = []
     
-    for sentence in sentences:
+    for sentence in sentences[:40]:  # Look at first 40 sentences
         sentence = sentence.strip()
-        if len(sentence) > 20 and len(sentence) < 250:
+        if len(sentence) > 20 and len(sentence) < 300:
             lower_sent = sentence.lower()
             if any(keyword in lower_sent for keyword in limitation_keywords):
                 limitation_sentences.append(sentence)
@@ -349,6 +387,13 @@ def generate_limitations(text: str, word_count: int) -> str:
     if limitation_sentences:
         return " ".join(limitation_sentences[:2])
     else:
+        # Fallback: look for sentences with limitation indicators
+        for sentence in sentences:
+            sentence = sentence.strip()
+            if len(sentence) > 30 and len(sentence) < 250:
+                lower_sent = sentence.lower()
+                if any(word in lower_sent for word in ['but', 'however', 'although', 'despite', 'while', 'future work']):
+                    return sentence
         return f"Analysis of {word_count} words of content reveals various challenges and limitations in the research approach."
 
 def generate_technical_details(text: str, word_count: int) -> str:
@@ -357,13 +402,13 @@ def generate_technical_details(text: str, word_count: int) -> str:
         return "Technical details analysis requires more content."
     
     # Look for technical content
-    technical_keywords = ['algorithm', 'model', 'architecture', 'parameter', 'dataset', 'metric', 'evaluation', 'implementation']
+    technical_keywords = ['algorithm', 'model', 'architecture', 'parameter', 'dataset', 'metric', 'evaluation', 'implementation', 'system', 'framework', 'protocol', 'mechanism', 'technique']
     sentences = text.split('.')
     technical_sentences = []
     
-    for sentence in sentences:
+    for sentence in sentences[:30]:  # Look at first 30 sentences
         sentence = sentence.strip()
-        if len(sentence) > 25 and len(sentence) < 300:
+        if len(sentence) > 25 and len(sentence) < 350:
             lower_sent = sentence.lower()
             if any(keyword in lower_sent for keyword in technical_keywords):
                 technical_sentences.append(sentence)
@@ -371,6 +416,13 @@ def generate_technical_details(text: str, word_count: int) -> str:
     if technical_sentences:
         return " ".join(technical_sentences[:2])
     else:
+        # Fallback: look for sentences with technical terms
+        for sentence in sentences:
+            sentence = sentence.strip()
+            if len(sentence) > 40 and len(sentence) < 300:
+                lower_sent = sentence.lower()
+                if any(word in lower_sent for word in ['data', 'system', 'process', 'function', 'component', 'module']):
+                    return sentence
         return f"Technical analysis of {word_count} words of content reveals various algorithms, models, and implementation details."
 
 def generate_impact(text: str, word_count: int) -> str:
@@ -379,13 +431,13 @@ def generate_impact(text: str, word_count: int) -> str:
         return "Impact analysis requires more content."
     
     # Look for impact-related content
-    impact_keywords = ['impact', 'significance', 'contribution', 'advance', 'improvement', 'benefit', 'value', 'importance']
+    impact_keywords = ['impact', 'significance', 'contribution', 'advance', 'improvement', 'benefit', 'value', 'importance', 'potential', 'applicable', 'useful', 'effective']
     sentences = text.split('.')
     impact_sentences = []
     
-    for sentence in sentences:
+    for sentence in sentences[:35]:  # Look at first 35 sentences
         sentence = sentence.strip()
-        if len(sentence) > 20 and len(sentence) < 250:
+        if len(sentence) > 20 and len(sentence) < 300:
             lower_sent = sentence.lower()
             if any(keyword in lower_sent for keyword in impact_keywords):
                 impact_sentences.append(sentence)
@@ -393,6 +445,13 @@ def generate_impact(text: str, word_count: int) -> str:
     if impact_sentences:
         return " ".join(impact_sentences[:2])
     else:
+        # Fallback: look for sentences with impact indicators
+        for sentence in sentences:
+            sentence = sentence.strip()
+            if len(sentence) > 30 and len(sentence) < 250:
+                lower_sent = sentence.lower()
+                if any(word in lower_sent for word in ['can', 'will', 'may', 'could', 'should', 'enable', 'provide', 'offer']):
+                    return sentence
         return f"Analysis of {word_count} words of content demonstrates the significance and potential impact of this research."
 
 def generate_structured_summary(text: str, word_count: int) -> str:
