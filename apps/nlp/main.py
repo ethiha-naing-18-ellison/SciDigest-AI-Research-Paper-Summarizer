@@ -1,38 +1,22 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
+# apps/nlp/main.py
+from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
-from typing import List, Optional, Dict, Any
-import fitz  # PyMuPDF
-import re
-import os
-from utils_meta import guess_title_and_authors
-from summarizer import summarize_chunk, reduce_summaries
-from related_work import get_related_works
-from contributions import extract_contributions
+from typing import List, Optional
 
-app = FastAPI(title="SciDigest NLP Service", version="1.0.0")
+app = FastAPI(title="SciDigest NLP", version="0.1.0")
 
-# CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# --- health & root ---
+@app.get("/")
+def root():
+    return RedirectResponse("/docs")
 
-# Models
-class ParseInput(BaseModel):
-    paperId: str
-    filePath: str
+@app.get("/healthz")
+def healthz():
+    return {"status": "ok"}
 
-class ParseMetaDto(BaseModel):
-    title: Optional[str] = None
-    authors: Optional[str] = None
-    year: Optional[int] = None
-    venue: Optional[str] = None
-
-class SectionDto(BaseModel):
+# --- schemas (stubs to keep API shape) ---
+class Section(BaseModel):
     name: str
     text: str
     tokens: int
@@ -40,23 +24,39 @@ class SectionDto(BaseModel):
     pageEnd: int
     orderIdx: int
 
-class ParseResultDto(BaseModel):
-    meta: Optional[ParseMetaDto] = None
-    sections: List[SectionDto]
+class ParseInput(BaseModel):
+    paper_id: str
+    file_path: str
+
+class ParseMeta(BaseModel):
+    title: Optional[str] = None
+    authors: Optional[str] = None
+    year: Optional[int] = None
+    venue: Optional[str] = None
+
+class ParseResult(BaseModel):
+    meta: Optional[ParseMeta] = None
+    sections: List[Section]
 
 class SummarizeInput(BaseModel):
-    paperId: str
-    sections: List[SectionDto]
+    paper_id: str
+    sections: List[Section]
 
-class SummarizeResponse(BaseModel):
+class Anchor(BaseModel):
+    bulletIndex: int
+    sectionName: str
+    pageStart: int
+    pageEnd: int
+
+class SummarizeResult(BaseModel):
     summary: str
     contributions: List[str]
-    anchors: List[Dict[str, Any]]
+    anchors: List[Anchor]
 
 class RelatedInput(BaseModel):
     title: Optional[str] = None
     keyphrases: Optional[List[str]] = None
-    sections: Optional[List[SectionDto]] = None
+    sections: Optional[List[Section]] = None
 
 class RelatedItem(BaseModel):
     title: str
@@ -66,111 +66,43 @@ class RelatedItem(BaseModel):
     url: Optional[str] = None
     reason: str
 
-class RelatedResponse(BaseModel):
+class RelatedPayload(BaseModel):
     provider: str
     items: List[RelatedItem]
 
-@app.post("/parse", response_model=ParseResultDto)
-async def parse_paper(input: ParseInput):
-    """Parse PDF and extract sections with metadata"""
-    try:
-        # Open PDF with PyMuPDF
-        doc = fitz.open(input.filePath)
-        
-        # Extract text from all pages
-        pages_text = []
-        for i in range(len(doc)):
-            page = doc.load_page(i)
-            pages_text.append(page.get_text("text"))
-        
-        # Extract metadata
-        title, authors, year, venue = guess_title_and_authors(pages_text, doc.metadata or {})
-        
-        # Create metadata DTO
-        meta = ParseMetaDto(
-            title=title,
-            authors=authors,
-            year=year,
-            venue=venue
-        )
-        
-        # Extract sections (simplified for now)
-        sections = []
-        order_idx = 0
-        
-        for i, page_text in enumerate(pages_text):
-            if page_text.strip():
-                # Simple section extraction - in practice, you'd use more sophisticated NLP
-                lines = page_text.split('\n')
-                section_name = f"Page {i+1}"
-                
-                # Try to find section headers
-                for line in lines[:10]:  # Check first 10 lines
-                    line = line.strip()
-                    if line and len(line) < 100 and line.isupper():
-                        section_name = line
-                        break
-                
-                sections.append(SectionDto(
-                    name=section_name,
-                    text=page_text,
-                    tokens=len(page_text.split()),
-                    pageStart=i+1,
-                    pageEnd=i+1,
-                    orderIdx=order_idx
-                ))
-                order_idx += 1
-        
-        doc.close()
-        
-        return ParseResultDto(meta=meta, sections=sections)
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to parse PDF: {str(e)}")
+# --- endpoints (stubbed) ---
+@app.post("/parse", response_model=ParseResult)
+def parse(inp: ParseInput):
+    return {
+        "meta": {"title": None, "authors": None, "year": None, "venue": None},
+        "sections": [{
+            "name": "abstract",
+            "text": "Replace with real PyMuPDF parsing.",
+            "tokens": 7,
+            "pageStart": 1,
+            "pageEnd": 1,
+            "orderIdx": 0
+        }]
+    }
 
-@app.post("/summarize", response_model=SummarizeResponse)
-async def summarize_paper(input: SummarizeInput):
-    """Generate executive summary and extract contributions"""
-    try:
-        # Combine all section text
-        all_text = "\n\n".join([section.text for section in input.sections])
-        
-        # Generate longer summary (300-450 words)
-        summary = reduce_summaries(all_text)
-        
-        # Extract contributions (up to 10)
-        contributions, anchors = extract_contributions(input.sections)
-        
-        return SummarizeResponse(
-            summary=summary,
-            contributions=contributions,
-            anchors=anchors
-        )
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to summarize: {str(e)}")
+@app.post("/summarize", response_model=SummarizeResult)
+def summarize(inp: SummarizeInput):
+    bullets = [f"Key contribution #{i+1} (stub)" for i in range(8)]
+    anchors = [{"bulletIndex": i, "sectionName": "abstract", "pageStart": 1, "pageEnd": 1} for i in range(len(bullets))]
+    return {
+        "summary": "Stub executive summary. Replace with real model output.",
+        "contributions": bullets,
+        "anchors": anchors
+    }
 
-@app.post("/related", response_model=RelatedResponse)
-async def get_related(input: RelatedInput):
-    """Get related papers (up to 10-12 items)"""
-    try:
-        # Get related works with increased limit
-        limit = int(os.getenv("RELATED_LIMIT", "10"))
-        items = get_related_works(input.title, input.keyphrases, input.sections, limit)
-        
-        return RelatedResponse(
-            provider="OpenAlex+SemanticScholar",
-            items=items
-        )
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get related works: {str(e)}")
-
-@app.get("/health")
-async def health_check():
-    """Health check endpoint"""
-    return {"status": "healthy", "service": "nlp"}
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+@app.post("/related", response_model=RelatedPayload)
+def related(inp: RelatedInput):
+    items = [{
+        "title": f"Related paper {i+1}",
+        "authors": "A. Author; B. Researcher",
+        "venue": "DemoConf",
+        "year": 2024,
+        "url": "https://example.org",
+        "reason": "Stub rationale."
+    } for i in range(10)]
+    return {"provider": "OpenAlex+SemanticScholar", "items": items}
