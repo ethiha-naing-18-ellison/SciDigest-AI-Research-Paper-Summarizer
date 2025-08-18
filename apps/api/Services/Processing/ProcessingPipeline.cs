@@ -144,14 +144,22 @@ public class ProcessingPipeline
                 OrderIdx = s.OrderIdx
             }).ToArray();
 
-            var (summary, contributions, details, anchors) = await _nlpClient.SummarizeAsync(paperId, sectionDtos);
+            var (summary, contributions, details, anchors, abstract_text, introduction, methodology, results, discussion, limitations, technicalDetails, impact) = await _nlpClient.SummarizeAsync(paperId, sectionDtos);
 
-            // Save summary
+            // Save summary with comprehensive sections
             var summaryEntity = new Summary
             {
                 Id = Guid.NewGuid(),
                 PaperId = paperId,
                 ExecutiveSummary = summary,
+                Abstract = abstract_text,
+                Introduction = introduction,
+                Methodology = methodology,
+                Results = results,
+                Discussion = discussion,
+                Limitations = limitations,
+                TechnicalDetails = technicalDetails,
+                Impact = impact,
                 CreatedAt = DateTime.UtcNow
             };
             await _repository.SaveSummaryAsync(summaryEntity);

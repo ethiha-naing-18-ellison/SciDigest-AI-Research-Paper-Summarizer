@@ -60,6 +60,14 @@ def test_nlp_service():
             print(f"  Summary length: {len(result.get('summary', ''))}")
             print(f"  Contributions: {len(result.get('contributions', []))}")
             print(f"  Details: {len(result.get('details', []))}")
+            print(f"  Abstract: {len(result.get('abstract', ''))} chars")
+            print(f"  Introduction: {len(result.get('introduction', ''))} chars")
+            print(f"  Methodology: {len(result.get('methodology', ''))} chars")
+            print(f"  Results: {len(result.get('results', ''))} chars")
+            print(f"  Discussion: {len(result.get('discussion', ''))} chars")
+            print(f"  Limitations: {len(result.get('limitations', ''))} chars")
+            print(f"  Technical Details: {len(result.get('technical_details', ''))} chars")
+            print(f"  Impact: {len(result.get('impact', ''))} chars")
         else:
             print(f"  Error: {response.text}")
     except Exception as e:

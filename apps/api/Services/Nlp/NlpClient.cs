@@ -44,7 +44,7 @@ public class NlpClient : INlpClient
         }
     }
 
-    public async Task<(string summary, string[] contributions, string[]? details, AnchorDto[] anchors)> SummarizeAsync(Guid paperId, SectionDto[] sections)
+    public async Task<(string summary, string[] contributions, string[]? details, AnchorDto[] anchors, string abstract_text, string introduction, string methodology, string results, string discussion, string limitations, string technicalDetails, string impact)> SummarizeAsync(Guid paperId, SectionDto[] sections)
     {
         if (_options.Stub)
         {
@@ -62,7 +62,15 @@ public class NlpClient : INlpClient
             return (body.Summary ?? string.Empty, 
                     body.Contributions ?? Array.Empty<string>(),
                     body.Details,
-                    body.Anchors ?? Array.Empty<AnchorDto>());
+                    body.Anchors ?? Array.Empty<AnchorDto>(),
+                    body.Abstract ?? string.Empty,
+                    body.Introduction ?? string.Empty,
+                    body.Methodology ?? string.Empty,
+                    body.Results ?? string.Empty,
+                    body.Discussion ?? string.Empty,
+                    body.Limitations ?? string.Empty,
+                    body.TechnicalDetails ?? string.Empty,
+                    body.Impact ?? string.Empty);
         }
         catch (Exception ex)
         {
@@ -146,9 +154,9 @@ public class NlpClient : INlpClient
         };
     }
 
-    private static (string summary, string[] contributions, string[]? details, AnchorDto[] anchors) GenerateStubSummary(Guid paperId)
+    private static (string summary, string[] contributions, string[]? details, AnchorDto[] anchors, string abstract_text, string introduction, string methodology, string results, string discussion, string limitations, string technicalDetails, string impact) GenerateStubSummary(Guid paperId)
     {
-        var summary = "This paper introduces a novel machine learning approach that combines deep learning with traditional statistical methods, achieving a 15% improvement in accuracy over existing baseline methods. The work addresses key challenges in the field and demonstrates significant potential for practical applications. The methodology introduces innovative techniques that bridge the gap between traditional statistical approaches and modern deep learning paradigms. Through extensive experimentation across multiple benchmark datasets, the proposed approach consistently outperforms state-of-the-art methods while maintaining computational efficiency. The comprehensive evaluation includes both quantitative metrics and qualitative analysis, providing robust validation of the proposed techniques. The findings contribute significantly to the advancement of hybrid machine learning methodologies and establish new benchmarks for future research in this domain.";
+        var summary = "This research paper presents a comprehensive analysis of machine learning methodologies and their applications in modern artificial intelligence systems. The study investigates novel approaches that combine deep learning techniques with traditional statistical methods, demonstrating significant improvements in accuracy and performance across multiple benchmark datasets. Through extensive experimentation and evaluation, the research establishes new benchmarks for hybrid machine learning approaches while providing valuable insights into the practical implementation of these methodologies in real-world applications.";
         
         var contributions = new[]
         {
@@ -192,7 +200,15 @@ public class NlpClient : INlpClient
             "Cross-dataset validation across multiple domains demonstrates the generalizability of our approach beyond the training distribution. The method maintains robust performance when applied to datasets with different characteristics and domains."
         };
 
-        return (summary, contributions, details, anchors);
+        return (summary, contributions, details, anchors, 
+                "This research paper presents a comprehensive analysis of machine learning methodologies and their applications in modern artificial intelligence systems.", 
+                "The research addresses key challenges in modern AI systems and explores innovative solutions to complex problems.", 
+                "Novel hybrid approach combining multiple techniques and methodologies for enhanced performance.", 
+                "Significant improvements in accuracy and efficiency demonstrated across multiple benchmark datasets.", 
+                "Results show promising applications in various domains with practical implications for real-world implementation.", 
+                "Current limitations include computational complexity and resource requirements for large-scale deployment.", 
+                "Advanced algorithms and deep learning architectures implemented with detailed technical specifications.", 
+                "Potential to revolutionize machine learning applications and establish new industry standards.");
     }
 
     private static RelatedPayload GenerateStubRelated(string? title)
@@ -300,8 +316,17 @@ public class NlpClient : INlpClient
     {
         public string Summary { get; set; } = string.Empty;
         public string[] Contributions { get; set; } = Array.Empty<string>();
-        public string[]? Details { get; set; }                         // NEW
+        public string[]? Details { get; set; }
         public AnchorDto[] Anchors { get; set; } = Array.Empty<AnchorDto>();
+        // New comprehensive sections
+        public string Abstract { get; set; } = string.Empty;
+        public string Introduction { get; set; } = string.Empty;
+        public string Methodology { get; set; } = string.Empty;
+        public string Results { get; set; } = string.Empty;
+        public string Discussion { get; set; } = string.Empty;
+        public string Limitations { get; set; } = string.Empty;
+        public string TechnicalDetails { get; set; } = string.Empty;
+        public string Impact { get; set; } = string.Empty;
     }
 }
 

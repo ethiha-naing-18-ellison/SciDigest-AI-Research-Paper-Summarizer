@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { usePollPaper } from "@/hooks/usePollPaper";
 import ProgressSteps from "@/components/ProgressSteps";
 import SummaryCard from "@/components/SummaryCard";
+import ComprehensiveSections from "@/components/ComprehensiveSections";
 import ContributionsList from "@/components/ContributionsList";
 import RelatedGrid from "@/components/RelatedGrid";
 import ExportButtons from "@/components/ExportButtons";
@@ -68,6 +69,7 @@ export default function PaperPage() {
       {done && (
         <>
           <SummaryCard text={paper.summary?.executiveSummary} />
+          <ComprehensiveSections summary={paper.summary} />
           <ContributionsList bullets={paper.contributions?.bullets} details={paper.contributions?.details} anchors={paper.contributions?.anchors} />
           <RelatedGrid data={paper.related} />
           <div className="glass rounded-2xl p-5 shadow-2xl">
