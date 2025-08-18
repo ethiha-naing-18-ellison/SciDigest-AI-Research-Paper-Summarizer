@@ -1,6 +1,7 @@
 using Api.Models;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
+using System.Net.Http.Json;
 
 namespace Api.Services.Nlp;
 
@@ -29,12 +30,12 @@ public class NlpClient : INlpClient
 
         try
         {
-            var request = new { paperId = paperId.ToString(), filePath };
-            var response = await _httpClient.PostAsJsonAsync("/parse", request);
-            response.EnsureSuccessStatusCode();
-            
-            var content = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<ParseResultDto>(content) ?? new ParseResultDto(null, Array.Empty<SectionDto>());
+            var payload = new { paper_id = paperId.ToString(), file_path = filePath };
+            var resp = await _httpClient.PostAsJsonAsync("parse", payload);
+            resp.EnsureSuccessStatusCode();
+            var body = await resp.Content.ReadFromJsonAsync<ParseResultDto>()
+                       ?? throw new InvalidOperationException("Empty /parse body");
+            return body;
         }
         catch (Exception ex)
         {
@@ -52,17 +53,16 @@ public class NlpClient : INlpClient
 
         try
         {
-            var request = new { paperId = paperId.ToString(), sections };
-            var response = await _httpClient.PostAsJsonAsync("/summarize", request);
-            response.EnsureSuccessStatusCode();
+            var payload = new { paper_id = paperId.ToString(), sections };
+            var resp = await _httpClient.PostAsJsonAsync("summarize", payload);
+            resp.EnsureSuccessStatusCode();
+            var body = await resp.Content.ReadFromJsonAsync<SummarizeResponse>()
+                       ?? throw new InvalidOperationException("Empty /summarize body");
             
-            var content = await response.Content.ReadAsStringAsync();
-            var result = JsonSerializer.Deserialize<SummarizeResponse>(content);
-            
-            return (result?.Summary ?? string.Empty, 
-                    result?.Contributions ?? Array.Empty<string>(),
-                    result?.Details,
-                    result?.Anchors ?? Array.Empty<AnchorDto>());
+            return (body.Summary ?? string.Empty, 
+                    body.Contributions ?? Array.Empty<string>(),
+                    body.Details,
+                    body.Anchors ?? Array.Empty<AnchorDto>());
         }
         catch (Exception ex)
         {
@@ -80,12 +80,12 @@ public class NlpClient : INlpClient
 
         try
         {
-            var request = new { title, keyphrases, sections };
-            var response = await _httpClient.PostAsJsonAsync("/related", request);
-            response.EnsureSuccessStatusCode();
-            
-            var content = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<RelatedPayload>(content) ?? new RelatedPayload();
+            var payload = new { title, keyphrases, sections };
+            var resp = await _httpClient.PostAsJsonAsync("related", payload);
+            resp.EnsureSuccessStatusCode();
+            var body = await resp.Content.ReadFromJsonAsync<RelatedPayload>()
+                       ?? throw new InvalidOperationException("Empty /related body");
+            return body;
         }
         catch (Exception ex)
         {

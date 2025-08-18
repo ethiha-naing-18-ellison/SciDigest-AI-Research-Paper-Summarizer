@@ -112,6 +112,8 @@ public class PapersController : ControllerBase
             });
         }
 
+        _logger.LogInformation("Paper {PaperId} meta: Title='{Title}', Authors='{Authors}'", id, paper.Title, paper.Authors);
+
         return Ok(paper);
     }
 
