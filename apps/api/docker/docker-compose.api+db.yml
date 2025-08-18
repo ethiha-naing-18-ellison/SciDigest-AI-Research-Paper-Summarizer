@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: research-db
+    environment:
+      ACCEPT_EULA: Y
+      SA_PASSWORD: YourStrong!Passw0rd
+      MSSQL_PID: Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+    networks:
+      - research-network
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P YourStrong!Passw0rd -Q 'SELECT 1'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  api:
+    build:
+      context: ..
+      dockerfile: docker/api.Dockerfile
+    container_name: research-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Default: "Server=db,1433;Database=ResearchDb;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;"
+      Storage__FilesRoot: "/data/files"
+      Nlp__BaseUrl: "http://localhost:8000"
+      Nlp__Stub: "true"
+      Limits__MaxPdfMb: "50"
+      CORS__AllowedOrigins__0: "http://localhost:3000"
+      Serilog__MinimumLevel: "Information"
+    ports:
+      - "5108:5108"
+    volumes:
+      - files_data:/data/files
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - research-network
+    restart: unless-stopped
+
+volumes:
+  mssql_data:
+    driver: local
+  files_data:
+    driver: local
+
+networks:
+  research-network:
+    driver: bridge

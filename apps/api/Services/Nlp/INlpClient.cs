@@ -1,0 +1,10 @@
+using Api.Models;
+
+namespace Api.Services.Nlp;
+
+public interface INlpClient
+{
+    Task<SectionDto[]> ParseAsync(Guid paperId, string filePath);
+    Task<(string summary, string[] contributions, AnchorDto[] anchors)> SummarizeAsync(Guid paperId, SectionDto[] sections);
+    Task<RelatedPayload> RelatedAsync(string? title, string[]? keyphrases, SectionDto[]? sections);
+}
