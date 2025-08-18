@@ -1,10 +1,47 @@
 using Api.Models;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Api.Services.Export;
 
 public class MarkdownExporter
 {
+    private static bool IsPlaceholderHost(string host) =>
+        host.Equals("example.com", StringComparison.OrdinalIgnoreCase) ||
+        host.Equals("example.org", StringComparison.OrdinalIgnoreCase);
+
+    private static string HostOf(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url)) return "";
+        try { return new Uri(url).Host; } catch { return ""; }
+    }
+
+    private static string BuildScholarUrl(string? title, string? authors, int? year)
+    {
+        var parts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(title)) parts.Add(title!);
+        if (!string.IsNullOrWhiteSpace(authors))
+        {
+            var first = Regex.Split(authors!, "[;,]").FirstOrDefault()?.Trim();
+            if (!string.IsNullOrWhiteSpace(first)) parts.Add(first!);
+        }
+        var q = Uri.EscapeDataString(string.Join(" ", parts));
+        var sb = new StringBuilder($"https://scholar.google.com/scholar?q={q}&hl=en");
+        if (year.HasValue) sb.Append($"&as_ylo={year.Value}&as_yhi={year.Value}");
+        return sb.ToString();
+    }
+
+    private static string ResolveLink(string? url, string? title, string? authors, int? year, string mode = "scholar_fallback")
+    {
+        var scholar = BuildScholarUrl(title, authors, year);
+        if (string.Equals(mode, "scholar_always", StringComparison.OrdinalIgnoreCase)) return scholar;
+
+        var host = HostOf(url);
+        if (string.IsNullOrWhiteSpace(url) || string.IsNullOrWhiteSpace(host) || IsPlaceholderHost(host))
+            return scholar;
+
+        return url!;
+    }
     public string GenerateMarkdown(PaperResponse paper)
     {
         var sb = new StringBuilder();
@@ -95,10 +132,9 @@ public class MarkdownExporter
                     sb.AppendLine($"**Published:** {string.Join(", ", yearVenue)}");
                 }
                 
-                if (!string.IsNullOrEmpty(item.Url))
-                {
-                    sb.AppendLine($"**URL:** [{item.Url}]({item.Url})");
-                }
+                // Use Google Scholar fallback for placeholder URLs
+                var resolvedUrl = ResolveLink(item.Url, item.Title, item.Authors, item.Year);
+                sb.AppendLine($"**URL:** [{resolvedUrl}]({resolvedUrl})");
                 
                 if (!string.IsNullOrEmpty(item.Reason))
                 {
