@@ -28,6 +28,7 @@ export interface RelatedItem {
   year?: number;
   url?: string;
   reason: string;
+  alternative_urls?: string[];  // Additional URLs for the same paper
 }
 
 export interface RelatedPayload {
