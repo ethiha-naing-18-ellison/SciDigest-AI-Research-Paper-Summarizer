@@ -6,4 +6,5 @@ public interface IExporter
 {
     Task<byte[]> ExportMarkdownAsync(PaperResponse paper);
     Task<byte[]> ExportPdfAsync(PaperResponse paper);
+    Task<byte[]> ExportPowerPointAsync(PaperResponse paper);
 }

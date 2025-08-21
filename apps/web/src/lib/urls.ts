@@ -10,5 +10,5 @@ export const urls = {
   upload: () => `${base}/api/papers`,
   paper: (id: string) => `${base}/api/papers/${id}`,
   reprocess: (id: string) => `${base}/api/papers/${id}/process`,
-  export: (id: string, format: "md" | "pdf") => `${base}/api/papers/${id}/export?format=${format}`,
+  export: (id: string, format: "md" | "pdf" | "pptx") => `${base}/api/papers/${id}/export?format=${format}`,
 };

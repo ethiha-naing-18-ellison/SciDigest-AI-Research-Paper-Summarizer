@@ -119,6 +119,7 @@ builder.Services.AddScoped<IPaperService, PaperService>();
 builder.Services.AddScoped<IExporter, ExportService>();
 builder.Services.AddScoped<MarkdownExporter>();
 builder.Services.AddScoped<PdfExporter>();
+builder.Services.AddScoped<PowerPointExporter>();
 builder.Services.AddScoped<ProcessingPipeline>();
 builder.Services.AddSingleton<IFileStorage, FileStorage>();
 

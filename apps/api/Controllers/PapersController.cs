@@ -205,11 +205,17 @@ public class PapersController : ControllerBase
                     fileName = $"paper-{id}.pdf";
                     break;
                 
+                case "pptx":
+                    content = await _exporter.ExportPowerPointAsync(paper);
+                    contentType = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+                    fileName = $"paper-{id}.html"; // For now, we'll generate HTML that can be opened in PowerPoint
+                    break;
+                
                 default:
                     return BadRequest(new ErrorResponse
                     {
                         Error = "InvalidFormat",
-                        Message = "Invalid export format. Use 'md' or 'pdf'.",
+                        Message = "Invalid export format. Use 'md', 'pdf', or 'pptx'.",
                         TraceId = HttpContext.TraceIdentifier
                     });
             }

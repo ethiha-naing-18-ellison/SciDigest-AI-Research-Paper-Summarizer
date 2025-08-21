@@ -6,11 +6,13 @@ public class ExportService : IExporter
 {
     private readonly MarkdownExporter _markdownExporter;
     private readonly PdfExporter _pdfExporter;
+    private readonly PowerPointExporter _powerPointExporter;
 
-    public ExportService(MarkdownExporter markdownExporter, PdfExporter pdfExporter)
+    public ExportService(MarkdownExporter markdownExporter, PdfExporter pdfExporter, PowerPointExporter powerPointExporter)
     {
         _markdownExporter = markdownExporter;
         _pdfExporter = pdfExporter;
+        _powerPointExporter = powerPointExporter;
     }
 
     public Task<byte[]> ExportMarkdownAsync(PaperResponse paper)
@@ -22,5 +24,10 @@ public class ExportService : IExporter
     public async Task<byte[]> ExportPdfAsync(PaperResponse paper)
     {
         return await _pdfExporter.GeneratePdfAsync(paper);
+    }
+
+    public async Task<byte[]> ExportPowerPointAsync(PaperResponse paper)
+    {
+        return await _powerPointExporter.GeneratePowerPointAsync(paper);
     }
 }

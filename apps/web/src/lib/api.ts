@@ -22,7 +22,7 @@ export async function reprocess(id: string): Promise<void> {
   if (!res.ok) throw new Error(await safeText(res));
 }
 
-export async function exportFile(id: string, format: "md" | "pdf"): Promise<Blob> {
+export async function exportFile(id: string, format: "md" | "pdf" | "pptx"): Promise<Blob> {
   const res = await fetch(urls.export(id, format), { method: "POST" });
   if (!res.ok) throw new Error(await safeText(res));
   return res.blob();
