@@ -10,4 +10,6 @@ public interface IPaperService
     Task<SummaryResponse?> GetSummaryAsync(Guid id);
     Task<RelatedResponse?> GetRelatedAsync(Guid id);
     Task EnqueueProcessingAsync(Guid paperId);
+    Task<SearchResponse> SearchPapersAsync(SearchRequest request);
+    Task<FilterOptionsResponse> GetFilterOptionsAsync();
 }

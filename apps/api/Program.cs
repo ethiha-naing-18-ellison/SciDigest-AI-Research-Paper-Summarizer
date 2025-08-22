@@ -8,6 +8,7 @@ using Api.Services;
 using Api.Services.Export;
 using Api.Services.Nlp;
 using Api.Services.Processing;
+using Api.Services.DocumentConverter;
 using Api.Validation;
 using FluentValidation;
 using FluentValidation.AspNetCore;
@@ -116,11 +117,19 @@ builder.Services.Configure<LimitsOptions>(builder.Configuration.GetSection("Limi
 // Application services
 builder.Services.AddScoped<IPaperRepository, PaperRepository>();
 builder.Services.AddScoped<IPaperService, PaperService>();
+builder.Services.AddScoped<IReadingListRepository, ReadingListRepository>();
+builder.Services.AddScoped<IReadingListService, ReadingListService>();
 builder.Services.AddScoped<IExporter, ExportService>();
 builder.Services.AddScoped<MarkdownExporter>();
 builder.Services.AddScoped<PdfExporter>();
 builder.Services.AddScoped<PowerPointExporter>();
 builder.Services.AddScoped<ProcessingPipeline>();
+
+// Document converters
+builder.Services.AddScoped<IDocumentConverter, DocxConverter>();
+builder.Services.AddScoped<IDocumentConverter, HtmlConverter>();
+builder.Services.AddScoped<IDocumentConverter, TexConverter>();
+builder.Services.AddScoped<IDocumentConverterService, DocumentConverterService>();
 builder.Services.AddSingleton<IFileStorage, FileStorage>();
 
 var app = builder.Build();

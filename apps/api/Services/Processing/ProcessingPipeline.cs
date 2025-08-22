@@ -3,8 +3,10 @@ using Api.Infrastructure.Data;
 using Api.Infrastructure.Persistence;
 using Api.Models;
 using Api.Services.Nlp;
+using Api.Services.DocumentConverter;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using System.Text;
 
 namespace Api.Services.Processing;
 
@@ -13,17 +15,20 @@ public class ProcessingPipeline
     private readonly ResearchDbContext _context;
     private readonly IPaperRepository _repository;
     private readonly INlpClient _nlpClient;
+    private readonly IDocumentConverterService _documentConverter;
     private readonly ILogger<ProcessingPipeline> _logger;
 
     public ProcessingPipeline(
         ResearchDbContext context,
         IPaperRepository repository,
         INlpClient nlpClient,
+        IDocumentConverterService documentConverter,
         ILogger<ProcessingPipeline> logger)
     {
         _context = context;
         _repository = repository;
         _nlpClient = nlpClient;
+        _documentConverter = documentConverter;
         _logger = logger;
     }
 
@@ -81,7 +86,27 @@ public class ProcessingPipeline
 
         try
         {
-            var parse = await _nlpClient.ParseAsync(paperId, filePath);
+            // Check if we need to convert the document first
+            var fileName = Path.GetFileName(filePath);
+            var contentType = GetContentTypeFromExtension(Path.GetExtension(fileName));
+            
+            ParseResultDto parse;
+            
+            if (_documentConverter.CanConvert(fileName, contentType))
+            {
+                // Convert document to text first
+                using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+                var convertedDocument = await _documentConverter.ConvertAsync(fileStream, fileName, contentType);
+                
+                // For now, we'll create a simple parse result from the converted text
+                // In the future, we could enhance the NLP service to accept text directly
+                parse = CreateParseResultFromText(paperId, convertedDocument.Text, fileName);
+            }
+            else
+            {
+                // Use existing NLP service for PDF files
+                parse = await _nlpClient.ParseAsync(paperId, filePath);
+            }
             
             // Update paper metadata if present
             var paper = await _repository.GetByIdAsync(paperId);
@@ -308,5 +333,97 @@ public class ProcessingPipeline
         }
 
         return phrases.Distinct().ToArray();
+    }
+
+    private static string GetContentTypeFromExtension(string extension)
+    {
+        return extension.ToLowerInvariant() switch
+        {
+            ".pdf" => "application/pdf",
+            ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ".doc" => "application/msword",
+            ".html" => "text/html",
+            ".htm" => "text/html",
+            ".xhtml" => "application/xhtml+xml",
+            ".tex" => "text/x-tex",
+            ".txt" => "text/plain",
+            _ => "application/octet-stream"
+        };
+    }
+
+    private static ParseResultDto CreateParseResultFromText(Guid paperId, string text, string fileName)
+    {
+        // Split text into sections (simple approach)
+        var lines = text.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        var sections = new List<SectionDto>();
+        
+        var currentSection = new StringBuilder();
+        var sectionIndex = 0;
+        
+        foreach (var line in lines)
+        {
+            var trimmedLine = line.Trim();
+            if (string.IsNullOrEmpty(trimmedLine)) continue;
+            
+            // Simple heuristic: if line is all caps and short, it might be a section header
+            if (trimmedLine.Length < 100 && trimmedLine == trimmedLine.ToUpperInvariant())
+            {
+                // Save previous section if it has content
+                if (currentSection.Length > 0)
+                {
+                    sections.Add(new SectionDto
+                    {
+                        Name = $"section_{sectionIndex}",
+                        Text = currentSection.ToString().Trim(),
+                        Tokens = currentSection.ToString().Split(' ', StringSplitOptions.RemoveEmptyEntries).Length,
+                        PageStart = sectionIndex + 1,
+                        PageEnd = sectionIndex + 1,
+                        OrderIdx = sectionIndex
+                    });
+                    sectionIndex++;
+                    currentSection.Clear();
+                }
+            }
+            
+            currentSection.AppendLine(trimmedLine);
+        }
+        
+        // Add the last section
+        if (currentSection.Length > 0)
+        {
+            sections.Add(new SectionDto
+            {
+                Name = $"section_{sectionIndex}",
+                Text = currentSection.ToString().Trim(),
+                Tokens = currentSection.ToString().Split(' ', StringSplitOptions.RemoveEmptyEntries).Length,
+                PageStart = sectionIndex + 1,
+                PageEnd = sectionIndex + 1,
+                OrderIdx = sectionIndex
+            });
+        }
+        
+        // If no sections were created, create one with all text
+        if (sections.Count == 0)
+        {
+            sections.Add(new SectionDto
+            {
+                Name = "content",
+                Text = text,
+                Tokens = text.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length,
+                PageStart = 1,
+                PageEnd = 1,
+                OrderIdx = 0
+            });
+        }
+        
+        return new ParseResultDto(
+            new ParseMetaDto(
+                Path.GetFileNameWithoutExtension(fileName),
+                "",
+                null,
+                ""
+            ),
+            sections.ToArray()
+        );
     }
 }

@@ -19,7 +19,7 @@ export default function UploadModeToggle({ mode, onModeChange }: UploadModeToggl
             flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300
             ${mode === 'single' 
               ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg' 
-              : 'dark:text-gray-400 text-gray-600 hover:dark:text-gray-200 hover:text-gray-800'
+              : 'dark:text-gray-400 text-gray-700 hover:dark:text-gray-200 hover:text-gray-800'
             }
           `}
         >
@@ -35,7 +35,7 @@ export default function UploadModeToggle({ mode, onModeChange }: UploadModeToggl
             flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300
             ${mode === 'batch' 
               ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg' 
-              : 'dark:text-gray-400 text-gray-600 hover:dark:text-gray-200 hover:text-gray-800'
+              : 'dark:text-gray-400 text-gray-700 hover:dark:text-gray-200 hover:text-gray-800'
             }
           `}
         >

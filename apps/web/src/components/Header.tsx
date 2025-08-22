@@ -17,16 +17,36 @@ export default function Header() {
               <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-300 to-blue-300 bg-clip-text text-transparent">
                 SciDigest
               </h1>
-              <p className="dark:text-gray-300 text-gray-600 text-sm font-medium">AI Research Paper Summarizer</p>
+              <p className="dark:text-gray-300 text-gray-700 text-sm font-medium">AI Research Paper Summarizer</p>
             </div>
           </div>
           
-          <div className="flex items-center space-x-6 text-sm dark:text-gray-300 text-gray-600">
+          <div className="flex items-center space-x-6 text-sm dark:text-gray-300 text-gray-700">
+            <nav className="hidden md:flex items-center space-x-4">
+              <a 
+                href="/" 
+                className="px-3 py-2 rounded-lg hover:dark:bg-white/10 hover:bg-black/10 transition-all duration-300"
+              >
+                Home
+              </a>
+              <a 
+                href="/search" 
+                className="px-3 py-2 rounded-lg hover:dark:bg-white/10 hover:bg-black/10 transition-all duration-300"
+              >
+                Search Papers
+              </a>
+              <a 
+                href="/reading-lists" 
+                className="px-3 py-2 rounded-lg hover:dark:bg-white/10 hover:bg-black/10 transition-all duration-300"
+              >
+                Reading Lists
+              </a>
+            </nav>
             <div className="hidden md:flex items-center space-x-2">
               <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
               <span>Online</span>
             </div>
-            <div className="hidden md:block px-3 py-1 dark:bg-white/5 bg-black/5 dark:border-white/10 border-black/10 border rounded-full">
+            <div className="hidden md:block px-3 py-1 dark:bg-white/5 bg-black/5 dark:border-white/10 border-gray-300 border rounded-full dark:text-gray-300 text-gray-700">
               ✨ Powered by AI
             </div>
             <ThemeToggle />

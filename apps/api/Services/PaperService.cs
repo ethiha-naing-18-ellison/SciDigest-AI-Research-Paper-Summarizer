@@ -38,7 +38,7 @@ public class PaperService : IPaperService
         {
             // Save file to storage
             using var stream = file.OpenReadStream();
-            var filePath = await _fileStorage.SaveAsync(paperId, stream);
+            var filePath = await _fileStorage.SaveAsync(paperId, stream, file.FileName);
             
             // Create paper entity
             var paper = new Paper
@@ -103,5 +103,43 @@ public class PaperService : IPaperService
         _backgroundJobClient.Enqueue<ProcessingPipeline>(x => x.ProcessAsync(paperId));
         _logger.LogInformation("Enqueued processing for paper {PaperId}", paperId);
         return Task.CompletedTask;
+    }
+
+    public async Task<SearchResponse> SearchPapersAsync(SearchRequest request)
+    {
+        var (papers, totalCount) = await _repository.SearchPapersAsync(
+            request.SearchTerm,
+            request.Venue,
+            request.Year,
+            request.Status,
+            request.SortBy,
+            request.SortDescending,
+            request.Skip,
+            request.Take
+        );
+
+        var paperDtos = _mapper.Map<PaperResponse[]>(papers);
+
+        return new SearchResponse
+        {
+            Papers = paperDtos,
+            TotalCount = totalCount,
+            PageSize = request.Take,
+            CurrentPage = (request.Skip / request.Take) + 1,
+            TotalPages = (int)Math.Ceiling((double)totalCount / request.Take)
+        };
+    }
+
+    public async Task<FilterOptionsResponse> GetFilterOptionsAsync()
+    {
+        var venues = await _repository.GetDistinctVenuesAsync();
+        var years = await _repository.GetDistinctYearsAsync();
+
+        return new FilterOptionsResponse
+        {
+            Venues = venues,
+            Years = years,
+            Statuses = Enum.GetValues<PaperStatus>()
+        };
     }
 }

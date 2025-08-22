@@ -4,8 +4,8 @@ namespace Api.Infrastructure.Storage;
 
 public interface IFileStorage
 {
-    Task<string> SaveAsync(Guid paperId, Stream stream);
-    string GetPath(Guid paperId);
+    Task<string> SaveAsync(Guid paperId, Stream stream, string? originalFileName = null);
+    string GetPath(Guid paperId, string? originalFileName = null);
     bool Exists(Guid paperId);
     void EnsureDirectoryExists();
 }
@@ -20,9 +20,9 @@ public class FileStorage : IFileStorage
         EnsureDirectoryExists();
     }
 
-    public async Task<string> SaveAsync(Guid paperId, Stream stream)
+    public async Task<string> SaveAsync(Guid paperId, Stream stream, string? originalFileName = null)
     {
-        var filePath = GetPath(paperId);
+        var filePath = GetPath(paperId, originalFileName);
         var directory = Path.GetDirectoryName(filePath);
         
         if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
@@ -36,9 +36,15 @@ public class FileStorage : IFileStorage
         return filePath;
     }
 
-    public string GetPath(Guid paperId)
+    public string GetPath(Guid paperId, string? originalFileName = null)
     {
-        return Path.Combine(_options.FilesRoot, $"{paperId}.pdf");
+        if (string.IsNullOrEmpty(originalFileName))
+        {
+            return Path.Combine(_options.FilesRoot, $"{paperId}.pdf");
+        }
+        
+        var extension = Path.GetExtension(originalFileName);
+        return Path.Combine(_options.FilesRoot, $"{paperId}{extension}");
     }
 
     public bool Exists(Guid paperId)

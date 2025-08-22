@@ -24,7 +24,7 @@ export default function HomePage() {
         <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-cyan-300 via-blue-300 to-purple-300 bg-clip-text text-transparent">
           Transform Research Papers
         </h1>
-        <p className="text-xl dark:text-gray-300 text-gray-600 max-w-2xl mx-auto">
+        <p className="text-xl dark:text-gray-300 text-gray-700 max-w-2xl mx-auto">
           Upload any PDF research paper and get instant AI-generated summaries, key contributions, and related work suggestions
         </p>
       </div>
@@ -41,7 +41,7 @@ export default function HomePage() {
             {uploadMode === 'single' ? 'Start by uploading a PDF' : 'Upload multiple research papers'}
           </h2>
         </div>
-        <p className="dark:text-gray-400 text-gray-600 mb-6">
+        <p className="dark:text-gray-400 text-gray-700 mb-6">
           {uploadMode === 'single' 
             ? "Max 50MB. We'll parse sections, summarize, and suggest related work using advanced AI."
             : "Upload up to 10 PDFs at once for batch processing. Each file max 50MB."
@@ -73,7 +73,7 @@ export default function HomePage() {
                 </svg>
               ),
               title: "Upload Paper",
-              description: "Upload your research paper (PDF format, up to 50MB)",
+              description: "Upload your research paper (PDF, DOCX, DOC, HTML, TEX, TXT formats, up to 50MB)",
               color: "from-blue-400 to-blue-600"
             },
             {
@@ -122,7 +122,7 @@ export default function HomePage() {
                 {step.icon}
               </div>
               <h4 className="dark:text-gray-100 text-gray-900 font-semibold mb-2">{step.title}</h4>
-              <p className="dark:text-gray-400 text-gray-600 text-sm">{step.description}</p>
+              <p className="dark:text-gray-400 text-gray-700 text-sm">{step.description}</p>
             </div>
           ))}
         </div>
@@ -150,7 +150,7 @@ export default function HomePage() {
           <div key={index} className="glass rounded-xl p-6 text-center hover:scale-105 transition-transform duration-300">
             <div className="text-3xl mb-3">{feature.icon}</div>
             <h3 className="dark:text-gray-100 text-gray-900 font-semibold mb-2">{feature.title}</h3>
-            <p className="dark:text-gray-400 text-gray-600 text-sm">{feature.description}</p>
+            <p className="dark:text-gray-400 text-gray-700 text-sm">{feature.description}</p>
           </div>
         ))}
       </div>

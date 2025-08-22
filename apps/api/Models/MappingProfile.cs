@@ -31,6 +31,14 @@ public class MappingProfile : Profile
         CreateMap<RelatedWork, RelatedResponse>()
             .ForMember(dest => dest.Items, opt => opt.MapFrom(src => 
                 ParseRelatedItems(src.ResultsJson)));
+
+        // Reading List mappings
+        CreateMap<ReadingList, ReadingListResponse>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id.ToString()));
+
+        CreateMap<ReadingListItem, ReadingListItemResponse>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id.ToString()))
+            .ForMember(dest => dest.PaperId, opt => opt.MapFrom(src => src.PaperId.ToString()));
     }
 
     private static string[] ParseContributionBullets(string bulletsJson)

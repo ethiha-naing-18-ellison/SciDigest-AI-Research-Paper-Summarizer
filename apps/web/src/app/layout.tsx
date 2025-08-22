@@ -47,7 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {/* Enhanced Footer */}
           <footer className="mt-16 text-center">
             <div className="glass rounded-xl p-4 inline-block">
-              <p className="dark:text-gray-400 text-gray-600 text-sm">
+              <p className="dark:text-gray-400 text-gray-700 text-sm">
                 © {new Date().getFullYear()} SciDigest • Made with ❤️ for researchers worldwide
               </p>
             </div>

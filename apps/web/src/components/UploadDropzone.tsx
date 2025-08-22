@@ -15,7 +15,23 @@ export default function UploadDropzone() {
   async function onFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
     const file = files[0];
-    if (file.type !== "application/pdf") { setToast("Please upload a PDF file."); return; }
+    
+    // Check for supported file types
+    const supportedTypes = [
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/msword",
+      "text/html",
+      "application/xhtml+xml",
+      "text/x-tex",
+      "application/x-tex",
+      "text/plain"
+    ];
+    
+    if (!supportedTypes.includes(file.type)) { 
+      setToast("Please upload a supported file (PDF, DOCX, DOC, HTML, TEX, TXT)."); 
+      return; 
+    }
     setBusy(true);
     try {
       const { paperId } = await uploadPdf(file);
@@ -76,7 +92,7 @@ export default function UploadDropzone() {
               {busy ? "Please wait while we process your file" : "Drag & drop your PDF or click to browse"}
             </p>
             <p className="text-gray-400 text-sm">
-              Supports PDF files up to 50MB
+              Supports PDF, DOCX, DOC, HTML, TEX, TXT files up to 50MB
             </p>
           </div>
 
@@ -101,7 +117,7 @@ export default function UploadDropzone() {
             )}
             <input 
               type="file" 
-              accept="application/pdf" 
+              accept=".pdf,.docx,.doc,.html,.htm,.xhtml,.tex,.txt" 
               className="hidden" 
               onChange={(e) => onFiles(e.target.files)}
               disabled={busy}

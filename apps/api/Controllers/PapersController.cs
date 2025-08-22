@@ -233,6 +233,42 @@ public class PapersController : ControllerBase
             });
         }
     }
+
+    /// <summary>
+    /// Search papers with filters and pagination
+    /// </summary>
+    [HttpGet("search")]
+    [ProducesResponseType<SearchResponse>(200)]
+    [ProducesResponseType<ErrorResponse>(400)]
+    public async Task<ActionResult<SearchResponse>> SearchPapers([FromQuery] SearchRequest request)
+    {
+        try
+        {
+            var result = await _paperService.SearchPapersAsync(request);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to search papers");
+            return BadRequest(new ErrorResponse
+            {
+                Error = "SearchFailed",
+                Message = "Failed to search papers",
+                TraceId = HttpContext.TraceIdentifier
+            });
+        }
+    }
+
+    /// <summary>
+    /// Get available filter options for search
+    /// </summary>
+    [HttpGet("filter-options")]
+    [ProducesResponseType<FilterOptionsResponse>(200)]
+    public async Task<ActionResult<FilterOptionsResponse>> GetFilterOptions()
+    {
+        var options = await _paperService.GetFilterOptionsAsync();
+        return Ok(options);
+    }
 }
 
 [ApiController]

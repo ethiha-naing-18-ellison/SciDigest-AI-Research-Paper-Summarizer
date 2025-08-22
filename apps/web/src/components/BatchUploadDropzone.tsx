@@ -66,20 +66,31 @@ export default function BatchUploadDropzone() {
   async function onFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
     
-    const pdfFiles = Array.from(files).filter(file => file.type === "application/pdf");
+    const supportedTypes = [
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/msword",
+      "text/html",
+      "application/xhtml+xml",
+      "text/x-tex",
+      "application/x-tex",
+      "text/plain"
+    ];
     
-    if (pdfFiles.length === 0) {
-      setToast("Please upload PDF files only.");
+    const supportedFiles = Array.from(files).filter(file => supportedTypes.includes(file.type));
+    
+    if (supportedFiles.length === 0) {
+      setToast("Please upload supported files (PDF, DOCX, DOC, HTML, TEX, TXT) only.");
       return;
     }
 
-    if (pdfFiles.length > 10) {
+    if (supportedFiles.length > 10) {
       setToast("Maximum 10 files allowed per batch.");
       return;
     }
 
     // Initialize upload progress for all files
-    const newUploads = pdfFiles.map(file => ({
+    const newUploads = supportedFiles.map(file => ({
       file,
       status: 'uploading' as const,
       progress: 0
@@ -88,10 +99,10 @@ export default function BatchUploadDropzone() {
     setUploads(newUploads);
 
     // Process files sequentially to avoid overwhelming the server
-    for (let i = 0; i < pdfFiles.length; i++) {
-      await processFile(pdfFiles[i], i);
+    for (let i = 0; i < supportedFiles.length; i++) {
+      await processFile(supportedFiles[i], i);
       // Small delay between uploads
-      if (i < pdfFiles.length - 1) {
+      if (i < supportedFiles.length - 1) {
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
@@ -147,18 +158,18 @@ export default function BatchUploadDropzone() {
             <h3 className="text-xl font-bold dark:text-gray-100 text-gray-900">
               {isUploading ? "Processing your papers..." : hover ? "Drop your PDFs here!" : "Batch Upload Research Papers"}
             </h3>
-            <p className="dark:text-gray-300 text-gray-600">
-              {isUploading ? "Please wait while we process your files" : "Drag & drop multiple PDFs or click to browse"}
+            <p className="dark:text-gray-300 text-gray-700">
+              {isUploading ? "Please wait while we process your files" : "Drag & drop multiple files or click to browse"}
             </p>
             <p className="dark:text-gray-400 text-gray-500 text-sm">
-              Supports up to 10 PDF files, max 50MB each
+              Supports up to 10 files (PDF, DOCX, DOC, HTML, TEX, TXT), max 50MB each
             </p>
           </div>
 
           {/* Upload button */}
           <label className={`inline-flex cursor-pointer items-center gap-3 rounded-2xl px-8 py-4 font-semibold transition-all duration-300 transform hover:scale-105 ${
             isUploading 
-              ? "bg-white/20 dark:text-gray-300 text-gray-600 cursor-not-allowed" 
+              ? "bg-white/20 dark:text-gray-300 text-gray-700 cursor-not-allowed" 
               : "bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-600 hover:to-blue-700 shadow-lg hover:shadow-xl"
           }`}>
             {isUploading ? (
@@ -171,12 +182,12 @@ export default function BatchUploadDropzone() {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
-                <span>Choose PDF Files</span>
+                <span>Choose Files</span>
               </>
             )}
             <input 
               type="file" 
-              accept="application/pdf" 
+              accept=".pdf,.docx,.doc,.html,.htm,.xhtml,.tex,.txt" 
               multiple
               className="hidden" 
               onChange={(e) => onFiles(e.target.files)}
@@ -195,7 +206,7 @@ export default function BatchUploadDropzone() {
               {!isUploading && (
                 <button
                   onClick={clearUploads}
-                  className="text-sm dark:text-gray-400 text-gray-600 hover:dark:text-gray-200 hover:text-gray-800 transition-colors"
+                  className="text-sm dark:text-gray-400 text-gray-700 hover:dark:text-gray-200 hover:text-gray-800 transition-colors"
                 >
                   Clear All
                 </button>
@@ -229,7 +240,7 @@ export default function BatchUploadDropzone() {
                     <p className="font-medium dark:text-gray-200 text-gray-800 truncate">
                       {upload.file.name}
                     </p>
-                    <p className="text-sm dark:text-gray-400 text-gray-600">
+                    <p className="text-sm dark:text-gray-400 text-gray-700">
                       {(upload.file.size / 1024 / 1024).toFixed(1)} MB
                     </p>
                     {upload.status === 'uploading' && (
@@ -262,7 +273,7 @@ export default function BatchUploadDropzone() {
             {uploads.length > 0 && (
               <div className="mt-4 p-3 dark:bg-white/5 bg-black/5 rounded-lg">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="dark:text-gray-400 text-gray-600">
+                  <span className="dark:text-gray-400 text-gray-700">
                     {completedCount} completed • {failedCount} failed • {uploads.length - completedCount - failedCount} processing
                   </span>
                   {completedCount > 0 && (

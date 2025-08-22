@@ -15,6 +15,8 @@ public class ResearchDbContext : DbContext
     public DbSet<Contribution> Contributions => Set<Contribution>();
     public DbSet<RelatedWork> RelatedWorks => Set<RelatedWork>();
     public DbSet<ProcessingJob> ProcessingJobs => Set<ProcessingJob>();
+    public DbSet<ReadingList> ReadingLists => Set<ReadingList>();
+    public DbSet<ReadingListItem> ReadingListItems => Set<ReadingListItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -93,6 +95,38 @@ public class ResearchDbContext : DbContext
             
             // Index on PaperId, Stage, and State
             entity.HasIndex(e => new { e.PaperId, e.Stage, e.State });
+        });
+
+        // ReadingList configuration
+        modelBuilder.Entity<ReadingList>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("GETUTCDATE()");
+            
+            // Index on Name for searching
+            entity.HasIndex(e => e.Name);
+        });
+
+        // ReadingListItem configuration
+        modelBuilder.Entity<ReadingListItem>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasOne(e => e.ReadingList)
+                  .WithMany(rl => rl.Items)
+                  .HasForeignKey(e => e.ReadingListId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Paper)
+                  .WithMany()
+                  .HasForeignKey(e => e.PaperId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            entity.Property(e => e.AddedAt).HasDefaultValueSql("GETUTCDATE()");
+            
+            // Unique index to prevent duplicate papers in the same reading list
+            entity.HasIndex(e => new { e.ReadingListId, e.PaperId }).IsUnique();
+            
+            // Index on ReadingListId and OrderIndex for sorting
+            entity.HasIndex(e => new { e.ReadingListId, e.OrderIndex });
         });
     }
 }
