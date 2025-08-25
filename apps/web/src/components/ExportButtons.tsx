@@ -16,7 +16,7 @@ export default function ExportButtons({ id }: { id: string }) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = fmt === "md" ? "summary.md" : fmt === "pdf" ? "summary.pdf" : "presentation.html";
+             a.download = fmt === "md" ? "summary.md" : fmt === "pdf" ? "summary.pdf" : "presentation-slides.pptx";
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -75,7 +75,7 @@ export default function ExportButtons({ id }: { id: string }) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2h4a1 1 0 011 1v14a1 1 0 01-1 1H3a1 1 0 01-1-1V5a1 1 0 011-1h4zM9 4v1h6V4H9z" />
               </svg>
             )}
-            <span>Export Presentation</span>
+            <span>Download Presentation Slides</span>
           </button>
         </div>
       </div>

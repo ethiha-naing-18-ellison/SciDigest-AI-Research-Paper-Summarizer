@@ -80,10 +80,14 @@ public class MappingProfile : Profile
         {
             // Try new format first (with details)
             var newItems = JsonSerializer.Deserialize<ContributionItem[]>(bulletsJson);
-            if (newItems != null)
+            if (newItems != null && newItems.Length > 0)
             {
                 var details = newItems.Select(x => x.detail ?? "").ToArray();
-                return details.Any(d => !string.IsNullOrWhiteSpace(d)) ? details : null;
+                // Only return details if at least one detail is not empty
+                if (details.Any(d => !string.IsNullOrWhiteSpace(d)))
+                {
+                    return details;
+                }
             }
             
             // Old format doesn't have details
